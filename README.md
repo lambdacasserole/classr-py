@@ -1,7 +1,7 @@
 # Classr SDK for Python
 Use microclassifiers in the cloud for spam detection, sentiment analysis and more.
 
-![Classr logo](./public/logo.svg)
+![Classr logo](./logo.svg)
 
 ## Requirements
 
