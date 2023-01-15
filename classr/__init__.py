@@ -8,8 +8,14 @@ Since:
 
 import json
 from uuid import UUID
+import urllib.parse
 import urllib.request
 import urllib.error
+
+
+DEFAULT_BASE_URL = 'https://www.classr.dev/'
+""" The default base API URL (the URL of the official Classr API).
+"""
 
 
 class ClassifierInfo:
@@ -100,12 +106,13 @@ def validate_uuid(uuid: str) -> bool:
     return str(uuid_obj) == uuid
 
 
-def classify(classifier_uuid: str, document: str) -> str:
+def classify(classifier_uuid: str, document: str, base_url: str = DEFAULT_BASE_URL) -> str:
     """ Classifies an unseen document using the classifier with the specified UUID.
 
     Args:
         classifier_uuid (str): The UUID of the classifier.
         document (str): The document to classify.
+        base_url (str): The base URL of the API to use (optional, defaults to the official API).
     Returns:
         str: The predicted class of the document.
     """
@@ -116,8 +123,8 @@ def classify(classifier_uuid: str, document: str) -> str:
 
     # Prepare request.
     request_body = json.dumps({'document': str(document)}).encode('utf8')
-    request = urllib.request.Request(f'https://www.classr.dev/api/classifier/{classifier_uuid}', data=request_body,
-        headers={'content-type': 'application/json'})
+    request = urllib.request.Request(urllib.parse.urljoin(base_url, f'/api/classifier/{classifier_uuid}'),
+        data=request_body, headers={'content-type': 'application/json'})
 
     # Send off API request.
     try:
@@ -135,11 +142,12 @@ def classify(classifier_uuid: str, document: str) -> str:
     return json.loads(response_body)['class']
 
 
-def get_info(classifier_uuid: str) -> ClassifierInfo:
+def get_info(classifier_uuid: str, base_url: str = DEFAULT_BASE_URL) -> ClassifierInfo:
     """ Gets information about the classifier with the specified UUID.
 
     Args:
         classifier_uuid (str): The UUID of the classifier.
+        base_url (str): The base URL of the API to use (optional, defaults to the official API).
     Returns:
         ClassifierInfo: Information about the classifier.
     """
@@ -149,7 +157,7 @@ def get_info(classifier_uuid: str) -> ClassifierInfo:
         raise ValueError('The UUID provided is not valid.')
 
     # Prepare request.
-    request = urllib.request.Request(f'https://www.classr.dev/api/classifier/{classifier_uuid}',
+    request = urllib.request.Request(urllib.parse.urljoin(base_url, f'/api/classifier/{classifier_uuid}'),
         headers={'accept': 'application/json'})
 
     # Send off API request.
@@ -170,13 +178,15 @@ class Classr:
     """ Represents a cloud-based classifier on the Classr platform.
     """
 
-    def __init__(self, classifier_uuid: str):
+    def __init__(self, classifier_uuid: str, base_url: str = DEFAULT_BASE_URL):
         """ Initializes a new instance of a cloud-based classifier on the Classr platform.
 
         Args:
             classifier_uuid (str): The UUID of the classifier.
+            base_url (str): The base URL of the API to use (optional, defaults to the official API).
         """
         self.classifier_uuid = classifier_uuid
+        self.base_url = base_url
 
     def classify(self, document: str) -> str:
         """ Classifies an unseen document using the classifier.
@@ -186,7 +196,7 @@ class Classr:
         Returns:
             str: The predicted class of the document.
         """
-        return classify(self.classifier_uuid, document)
+        return classify(self.classifier_uuid, document, self.base_url)
 
     def get_info(self) -> ClassifierInfo:
         """ Gets information about the classifier.
@@ -194,4 +204,4 @@ class Classr:
         Returns:
             ClassifierInfo: Information about the classifier.
         """
-        return get_info(self.classifier_uuid)
+        return get_info(self.classifier_uuid, self.base_url)
